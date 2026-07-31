@@ -37,11 +37,13 @@ Narrow scope with measured results is more useful than broad scope with none. QB
 | Source | Authority weight |
 |---|---|
 | IRC §162, §179, §274(d), §280A, §1401 | 1.0 |
-| Treas. Reg. §1.280A-2, §1.274-5 | 0.9 |
+| Treas. Reg. §1.274-5 | 0.9 |
 | Schedule C / SE / Form 8829 instructions | 0.5 |
 | Publications 334, 463, 587 | 0.4 |
 
 IRS publications are guidance, not authority. Where a publication and the statute it interprets appear to conflict, the system surfaces the statute.
+
+**Note:** an initial version of this table also listed a Treas. Reg. §1.280A-2. During ingestion, a search of eCFR (the current, official compilation of adopted federal regulations) turned up no regulation under §280A — the home-office rules were only ever proposed, never finalized. The authority chain for home office is therefore IRC §280A → Publication 587 directly, with no regulation layer in between, which is a sharper illustration of the authority-hierarchy problem than a two-tier statute/reg split would have been.
 
 ---
 
