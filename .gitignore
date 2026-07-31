@@ -1,0 +1,17 @@
+# Planning documents — not part of the public repo
+/planning/
+
+# Data
+data/raw/
+*.sqlite3
+chroma/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+
+# OS
+.DS_Store
