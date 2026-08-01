@@ -1,0 +1,9 @@
+beautifulsoup4
+pdfplumber
+numpy<2
+torch==2.2.2
+transformers==4.41.2
+sentence-transformers==3.0.1
+chromadb
+streamlit
+groq
