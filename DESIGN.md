@@ -17,7 +17,7 @@ Naive RAG — chunk the documents, embed, retrieve top-k, generate — fails on 
 | Much of the arithmetic is deterministic | Language models are the wrong tool for it |
 | Some questions genuinely require a professional | The system needs a correct way to decline |
 
-A concrete failure from early testing: a dense-only retriever asked about the **§179** expensing election returned chunks about **§199A**, because the two section identifiers are nearly indistinguishable in embedding space and are legally unrelated. That single failure is what motivated hybrid retrieval.
+A concrete, traced failure: asking "What does IRC §280A(c)(1) require for the home-office exception to the general disallowance rule?" — dense retrieval's top-5 never included the statute at all, only IRS Publication chunks describing the same rule in plain English. That is the hierarchical-authority failure above, caught in real eval data, not hypothesized.
 
 ---
 
@@ -60,41 +60,41 @@ Neither retriever covers both. Running them in parallel and fusing does.
 
 **Why RRF rather than weighted score fusion:** BM25 scores and cosine similarities occupy incompatible ranges, so blending raw scores requires a normalization constant that doesn't transfer across query types. RRF operates only on rank position — no tuning, and it degrades gracefully when one retriever returns nothing useful.
 
-### Cross-encoder reranking
+### Cross-encoder reranking (planned, not yet implemented)
 
-Bi-encoders embed query and document independently, which is what makes them fast enough to scan a corpus. Cross-encoders attend over the pair jointly and are substantially more accurate, but too slow for full-corpus scan. Applying one to the top 20 candidates and returning 5 captures most of the accuracy gain at bounded cost.
+Bi-encoders embed query and document independently, which is what makes them fast enough to scan a corpus. Cross-encoders attend over the pair jointly and are substantially more accurate, but too slow for full-corpus scan. The plan is to apply one to the top 20 candidates and return 5, capturing most of the accuracy gain at bounded cost — directly targeting the §280A(c)(1) failure mode above, where the statute exists in the corpus but doesn't outrank the Publication describing it.
 
-### Authority-weighted reordering
+### Authority-weighted reordering (planned, not yet implemented)
 
-When two chunks answer the same question, the one with higher authority weight is preferred. This is domain-specific and doesn't generalize outside legal or regulatory corpora, but within them it matters: a taxpayer relying on a publication where the regulation says something narrower has a real problem.
-
----
-
-## Deterministic tools over generated arithmetic
-
-Self-employment tax and the home office deduction are computed, not looked up. Both are implemented as unit-tested Python functions with rates in a version-keyed config, so a new tax year is a data change rather than a code change.
-
-A language model producing a plausible but incorrect self-employment tax figure is worse than one that declines — the error is invisible to the person least equipped to catch it. Tools make the arithmetic auditable and correct by construction.
+When two chunks answer the same question, the plan is to prefer the one with higher authority weight. This is domain-specific and doesn't generalize outside legal or regulatory corpora, but within them it matters: a taxpayer relying on a publication where the regulation says something narrower has a real problem.
 
 ---
 
-## Citation verification
+## Deterministic tools over generated arithmetic (planned, not yet implemented)
 
-Every generated answer passes through a verification step that checks:
+Self-employment tax and the home office deduction should be computed, not looked up. The plan is unit-tested Python functions with rates in a version-keyed config, so a new tax year is a data change rather than a code change.
+
+A language model producing a plausible but incorrect self-employment tax figure is worse than one that declines — the error is invisible to the person least equipped to catch it. Tools would make the arithmetic auditable and correct by construction.
+
+---
+
+## Citation verification (planned, not yet implemented)
+
+The plan is for every generated answer to pass through a verification step that checks:
 
 1. Each factual claim carries a citation
 2. The cited chunk actually supports the claim
 3. The tax year in the answer matches the year in the question
 
-Failures trigger one retry with a reformulated query, then an explicit refusal.
+Failures would trigger one retry with a reformulated query, then an explicit refusal.
 
-**Refusal is a designed outcome, not a failure mode.** In a regulated domain, declining to answer is frequently the correct behavior, and refusal precision is measured as a first-class metric alongside recall.
+**Refusal is already a designed outcome, not a failure mode**, independent of the verification loop above — the pipeline declines out-of-scope or underspecified questions today, and refusal precision is measured as a first-class metric alongside recall.
 
 ---
 
 ## Evaluation
 
-A 50-question evaluation set with ground-truth answers and required citations, authored by hand against source documents and reviewed by a CPA. Categories: factual lookup, exact-identifier, computational, temporal, out-of-scope, and adversarial.
+A 55-question evaluation set with ground-truth answers and required citations, authored by hand against source documents. Categories: factual lookup, exact-identifier, computational, temporal, out-of-scope, and adversarial.
 
 The adversarial category tests whether the system corrects a false premise rather than accommodating it — e.g. *"I can deduct my whole car since I use it for work, right?"* Agreement under social pressure is a measurable failure mode.
 
@@ -107,7 +107,7 @@ An ablation study isolates each component's contribution by re-running the same 
 ## Known limitations
 
 - **Multi-hop reasoning is the weakest category.** Questions requiring synthesis across statute, regulation, and a ruling that qualifies both are not handled well. Retrieval assumes the answer lives in a single authority. Graph-based retrieval over citation cross-references is the natural fix.
-- **LLM-as-judge correlates imperfectly with human judgment.** A subset of the evaluation set was hand-labeled to measure agreement; the figure is reported in the README rather than assumed.
+- **LLM-as-judge correlates imperfectly with human judgment.** No hand-labeled subset has been scored against the judge yet — this is an open, unverified gap, not a measured figure.
 - **Single-user, local deployment.** ChromaDB runs in-process. Concurrent use would require pgvector or Qdrant.
 - **Federal only, three topics.** Not a general tax research tool.
 
