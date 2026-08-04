@@ -43,7 +43,12 @@ if st.button("Ask") and query:
     if answer.refused:
         st.warning(answer.text)
     else:
-        st.write(answer.text)
+        # st.write renders strings as markdown, and markdown treats $...$
+        # as LaTeX math -- so a dollar amount like "$5 per square foot"
+        # gets rendered as a math expression instead of plain text.
+        # Escaped only here, at display time: the raw answer stored in
+        # eval results (generate.py) must stay unescaped.
+        st.write(answer.text.replace("$", "\\$"))
         if answer.citations:
             st.markdown("**Sources cited:**")
             for c in answer.citations:
