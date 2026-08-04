@@ -1,5 +1,7 @@
 # TaxRAG — Agentic Retrieval for Small-Business Federal Tax
 
+**Live app:** https://taxrag.streamlit.app/
+
 TaxRAG is a citation-grounded research assistant for Schedule C /
 self-employed federal tax questions — the home office deduction,
 vehicle/mileage deduction, and self-employment tax. It surfaces primary
