@@ -1,0 +1,342 @@
+{
+  "config": "dense_only",
+  "retrieval_only": true,
+  "complete": true,
+  "summary": {
+    "n_questions": 55,
+    "recall_at_5": 0.6887755102040817,
+    "mrr": 0.7666666666666666
+  },
+  "per_question": [
+    {
+      "id": "q001",
+      "category": "factual_lookup",
+      "recall_at_5": 0.0,
+      "mrr": 0.0
+    },
+    {
+      "id": "q002",
+      "category": "factual_lookup",
+      "recall_at_5": 1.0,
+      "mrr": 1.0
+    },
+    {
+      "id": "q003",
+      "category": "factual_lookup",
+      "recall_at_5": 0.5,
+      "mrr": 1.0
+    },
+    {
+      "id": "q004",
+      "category": "factual_lookup",
+      "recall_at_5": 1.0,
+      "mrr": 1.0
+    },
+    {
+      "id": "q005",
+      "category": "factual_lookup",
+      "recall_at_5": 0.5,
+      "mrr": 1.0
+    },
+    {
+      "id": "q006",
+      "category": "computational",
+      "recall_at_5": 0.5,
+      "mrr": 0.5
+    },
+    {
+      "id": "q007",
+      "category": "computational",
+      "recall_at_5": 0.5,
+      "mrr": 1.0
+    },
+    {
+      "id": "q008",
+      "category": "temporal",
+      "recall_at_5": 1.0,
+      "mrr": 0.2
+    },
+    {
+      "id": "q009",
+      "category": "factual_lookup",
+      "recall_at_5": 1.0,
+      "mrr": 1.0
+    },
+    {
+      "id": "q010",
+      "category": "factual_lookup",
+      "recall_at_5": 0.5,
+      "mrr": 0.3333333333333333
+    },
+    {
+      "id": "q011",
+      "category": "factual_lookup",
+      "recall_at_5": 0.5,
+      "mrr": 0.5
+    },
+    {
+      "id": "q012",
+      "category": "factual_lookup",
+      "recall_at_5": 0.5,
+      "mrr": 1.0
+    },
+    {
+      "id": "q013",
+      "category": "factual_lookup",
+      "recall_at_5": 1.0,
+      "mrr": 1.0
+    },
+    {
+      "id": "q014",
+      "category": "computational",
+      "recall_at_5": 1.0,
+      "mrr": 0.5
+    },
+    {
+      "id": "q015",
+      "category": "computational",
+      "recall_at_5": 1.0,
+      "mrr": 1.0
+    },
+    {
+      "id": "q016",
+      "category": "factual_lookup",
+      "recall_at_5": 0.5,
+      "mrr": 0.3333333333333333
+    },
+    {
+      "id": "q017",
+      "category": "factual_lookup",
+      "recall_at_5": 1.0,
+      "mrr": 1.0
+    },
+    {
+      "id": "q018",
+      "category": "factual_lookup",
+      "recall_at_5": 0.5,
+      "mrr": 1.0
+    },
+    {
+      "id": "q019",
+      "category": "factual_lookup",
+      "recall_at_5": 1.0,
+      "mrr": 1.0
+    },
+    {
+      "id": "q020",
+      "category": "factual_lookup",
+      "recall_at_5": 1.0,
+      "mrr": 1.0
+    },
+    {
+      "id": "q021",
+      "category": "multi_hop",
+      "recall_at_5": 0.25,
+      "mrr": 1.0
+    },
+    {
+      "id": "q022",
+      "category": "exact_token",
+      "recall_at_5": 1.0,
+      "mrr": 0.2
+    },
+    {
+      "id": "q023",
+      "category": "exact_token",
+      "recall_at_5": 0.5,
+      "mrr": 1.0
+    },
+    {
+      "id": "q024",
+      "category": "exact_token",
+      "recall_at_5": 1.0,
+      "mrr": 1.0
+    },
+    {
+      "id": "q025",
+      "category": "exact_token",
+      "recall_at_5": 0.0,
+      "mrr": 0.0
+    },
+    {
+      "id": "q026",
+      "category": "exact_token",
+      "recall_at_5": 1.0,
+      "mrr": 1.0
+    },
+    {
+      "id": "q027",
+      "category": "exact_token",
+      "recall_at_5": 1.0,
+      "mrr": 0.3333333333333333
+    },
+    {
+      "id": "q028",
+      "category": "exact_token",
+      "recall_at_5": 1.0,
+      "mrr": 1.0
+    },
+    {
+      "id": "q029",
+      "category": "exact_token",
+      "recall_at_5": 1.0,
+      "mrr": 1.0
+    },
+    {
+      "id": "q030",
+      "category": "exact_token",
+      "recall_at_5": 0.6666666666666666,
+      "mrr": 1.0
+    },
+    {
+      "id": "q031",
+      "category": "exact_token",
+      "recall_at_5": 0.0,
+      "mrr": 0.0
+    },
+    {
+      "id": "q032",
+      "category": "exact_token",
+      "recall_at_5": 0.5,
+      "mrr": 1.0
+    },
+    {
+      "id": "q033",
+      "category": "exact_token",
+      "recall_at_5": 1.0,
+      "mrr": 1.0
+    },
+    {
+      "id": "q034",
+      "category": "out_of_scope",
+      "recall_at_5": null,
+      "mrr": null
+    },
+    {
+      "id": "q035",
+      "category": "out_of_scope",
+      "recall_at_5": null,
+      "mrr": null
+    },
+    {
+      "id": "q036",
+      "category": "out_of_scope",
+      "recall_at_5": null,
+      "mrr": null
+    },
+    {
+      "id": "q037",
+      "category": "out_of_scope",
+      "recall_at_5": null,
+      "mrr": null
+    },
+    {
+      "id": "q038",
+      "category": "out_of_scope",
+      "recall_at_5": null,
+      "mrr": null
+    },
+    {
+      "id": "q039",
+      "category": "out_of_scope",
+      "recall_at_5": null,
+      "mrr": null
+    },
+    {
+      "id": "q040",
+      "category": "adversarial",
+      "recall_at_5": 1.0,
+      "mrr": 1.0
+    },
+    {
+      "id": "q041",
+      "category": "adversarial",
+      "recall_at_5": 0.5,
+      "mrr": 1.0
+    },
+    {
+      "id": "q042",
+      "category": "adversarial",
+      "recall_at_5": 0.5,
+      "mrr": 1.0
+    },
+    {
+      "id": "q043",
+      "category": "adversarial",
+      "recall_at_5": 0.0,
+      "mrr": 0.0
+    },
+    {
+      "id": "q044",
+      "category": "temporal",
+      "recall_at_5": 1.0,
+      "mrr": 1.0
+    },
+    {
+      "id": "q045",
+      "category": "temporal",
+      "recall_at_5": 1.0,
+      "mrr": 1.0
+    },
+    {
+      "id": "q046",
+      "category": "temporal",
+      "recall_at_5": 1.0,
+      "mrr": 1.0
+    },
+    {
+      "id": "q047",
+      "category": "temporal",
+      "recall_at_5": 0.0,
+      "mrr": 0.0
+    },
+    {
+      "id": "q048",
+      "category": "computational",
+      "recall_at_5": 0.5,
+      "mrr": 0.3333333333333333
+    },
+    {
+      "id": "q049",
+      "category": "computational",
+      "recall_at_5": 0.5,
+      "mrr": 0.3333333333333333
+    },
+    {
+      "id": "q050",
+      "category": "computational",
+      "recall_at_5": 1.0,
+      "mrr": 1.0
+    },
+    {
+      "id": "q051",
+      "category": "computational",
+      "recall_at_5": 1.0,
+      "mrr": 1.0
+    },
+    {
+      "id": "q052",
+      "category": "multi_hop",
+      "recall_at_5": 0.3333333333333333,
+      "mrr": 1.0
+    },
+    {
+      "id": "q053",
+      "category": "multi_hop",
+      "recall_at_5": 0.5,
+      "mrr": 1.0
+    },
+    {
+      "id": "q054",
+      "category": "multi_hop",
+      "recall_at_5": 0.5,
+      "mrr": 1.0
+    },
+    {
+      "id": "q055",
+      "category": "multi_hop",
+      "recall_at_5": 1.0,
+      "mrr": 1.0
+    }
+  ]
+}
