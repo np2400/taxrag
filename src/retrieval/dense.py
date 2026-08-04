@@ -5,10 +5,12 @@ connection are both expensive one-time setup costs that should happen once
 per process, not once per query.
 """
 
+import json
+
 import chromadb
 from sentence_transformers import SentenceTransformer
 
-from config.settings import CHROMA_PERSIST_DIR, EMBEDDING_MODEL_NAME
+from config.settings import CHROMA_PERSIST_DIR, CHUNKS_PATH, EMBEDDING_MODEL_NAME
 from src.types import Chunk, RetrievalResult
 
 # bge models are trained with an asymmetric convention: queries get this
@@ -32,6 +34,19 @@ class DenseRetriever:
         self._collection = self._client.get_or_create_collection(
             name=_COLLECTION_NAME, metadata={"hnsw:space": "cosine"}
         )
+        if self._collection.count() == 0:
+            self._build_index()
+
+    def _build_index(self) -> None:
+        """First-run bootstrap. data/chroma/ is gitignored -- it's fully
+        rebuildable from the committed data/processed/chunks.json, so
+        there's nothing worth version-controlling a binary index for.
+        That means a fresh checkout (a Streamlit Cloud deploy, or anyone
+        cloning the repo) starts with an empty collection; this embeds
+        the committed corpus once, here, rather than requiring a manual
+        build step no one would remember to run."""
+        raw_chunks = json.loads(CHUNKS_PATH.read_text())
+        self.index_chunks([Chunk(**c) for c in raw_chunks])
 
     def index_chunks(self, chunks: list[Chunk]) -> None:
         """One-time build step: embed every chunk and store it, keyed by
