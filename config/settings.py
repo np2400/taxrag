@@ -43,5 +43,5 @@ _load_dotenv(BASE_DIR / ".env")
 
 # --- Generation model ---
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
-GROQ_MODEL_NAME = "llama-3.3-70b-versatile"
+GROQ_MODEL_NAME = "openai/gpt-oss-120b"
 REFUSAL_MARKER = "INSUFFICIENT_INFORMATION"
