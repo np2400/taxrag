@@ -15,6 +15,7 @@ DATA_PROCESSED_DIR = BASE_DIR / "data" / "processed"
 CHROMA_PERSIST_DIR = BASE_DIR / "data" / "chroma"
 
 CHUNKS_PATH = DATA_PROCESSED_DIR / "chunks.json"
+EMBEDDINGS_PATH = DATA_PROCESSED_DIR / "embeddings.npz"  # precomputed, see scripts/precompute_embeddings.py
 
 # --- Embedding model ---
 # Local, free, runs via sentence-transformers — no API key required.

@@ -8,9 +8,15 @@ per process, not once per query.
 import json
 
 import chromadb
+import numpy as np
 from sentence_transformers import SentenceTransformer
 
-from config.settings import CHROMA_PERSIST_DIR, CHUNKS_PATH, EMBEDDING_MODEL_NAME
+from config.settings import (
+    CHROMA_PERSIST_DIR,
+    CHUNKS_PATH,
+    EMBEDDING_MODEL_NAME,
+    EMBEDDINGS_PATH,
+)
 from src.types import Chunk, RetrievalResult
 
 # bge models are trained with an asymmetric convention: queries get this
@@ -44,15 +50,51 @@ class DenseRetriever:
         That means a fresh checkout (a Streamlit Cloud deploy, or anyone
         cloning the repo) starts with an empty collection; this embeds
         the committed corpus once, here, rather than requiring a manual
-        build step no one would remember to run."""
-        raw_chunks = json.loads(CHUNKS_PATH.read_text())
-        self.index_chunks([Chunk(**c) for c in raw_chunks])
+        build step no one would remember to run.
 
-    def index_chunks(self, chunks: list[Chunk]) -> None:
-        """One-time build step: embed every chunk and store it, keyed by
-        chunk_id, with its metadata alongside."""
+        Embedding 1,531 chunks from scratch on Streamlit Community
+        Cloud's free-tier CPU is what was taking ~90s on cold start. If
+        data/processed/embeddings.npz exists (built by
+        scripts/precompute_embeddings.py and committed), load those
+        vectors instead of recomputing them -- the model still loads
+        either way, since it's needed for queries regardless, but that's
+        one model load instead of 1,531 forward passes."""
+        raw_chunks = json.loads(CHUNKS_PATH.read_text())
+        chunks = [Chunk(**c) for c in raw_chunks]
+        embeddings = self._load_precomputed_embeddings(chunks) if EMBEDDINGS_PATH.exists() else None
+        self.index_chunks(chunks, embeddings=embeddings)
+
+    def _load_precomputed_embeddings(self, chunks: list[Chunk]) -> list[list[float]]:
+        """Precomputed vectors are only trustworthy if they're for
+        exactly this corpus, in this order -- a re-chunk that changes
+        chunk_id count OR ordering without re-running
+        scripts/precompute_embeddings.py would otherwise silently pair
+        the wrong vector with the wrong chunk text. A bare count check
+        wouldn't catch a same-count reorder, so this compares the full
+        chunk_id sequence and refuses to use a stale file rather than
+        quietly falling back to a from-scratch embed that would mask
+        the drift."""
+        data = np.load(EMBEDDINGS_PATH)
+        stored_ids = list(data["chunk_ids"])
+        current_ids = [c.chunk_id for c in chunks]
+        if stored_ids != current_ids:
+            raise RuntimeError(
+                f"{EMBEDDINGS_PATH} has {len(stored_ids)} embeddings that don't "
+                f"match the {len(current_ids)} chunks in {CHUNKS_PATH} (count and/or "
+                "order differ) -- re-run `python -m scripts.precompute_embeddings` "
+                "after any re-chunk before deploying."
+            )
+        return data["embeddings"].tolist()
+
+    def index_chunks(
+        self, chunks: list[Chunk], embeddings: list[list[float]] | None = None
+    ) -> None:
+        """One-time build step: embed every chunk (unless precomputed
+        embeddings are supplied) and store it, keyed by chunk_id, with
+        its metadata alongside."""
         texts = [c.text for c in chunks]
-        embeddings = self._model.encode(texts, normalize_embeddings=True).tolist()
+        if embeddings is None:
+            embeddings = self._model.encode(texts, normalize_embeddings=True).tolist()
         self._collection.upsert(
             ids=[c.chunk_id for c in chunks],
             embeddings=embeddings,
