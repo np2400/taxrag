@@ -64,6 +64,7 @@ chunk IDs — so this table is complete.
 | Dense only | 0.689 | 0.767 |
 | BM25 only | 0.624 | 0.643 |
 | Hybrid (RRF) | 0.675 | 0.813 |
+| Hybrid + citation lookup | 0.706 | 0.847 |
 
 By category (n=12 exact-token, n=8 computational, n=5 multi-hop, n=15
 factual lookup):
@@ -83,6 +84,16 @@ chunk is already retrieved, fusing in BM25 tends to rank it higher
 (exact-token 0.711 to 0.722, computational 0.708 to 0.938, factual 0.811
 to 0.867). That is a real, more modest result than "hybrid rescues
 exact-token misses," reported as measured rather than reframed.
+
+**Citation lookup moves exactly one category, by design.** When a query
+names a specific IRC provision (`§280A(c)(1)`, `IRC 1401(b)(2)`), the
+pipeline now resolves it directly against each chunk's citation field
+instead of depending on ranking to surface it — see Design decisions
+below. On the retrieval-only harness this takes exact_token Recall@5
+from 0.722 to 0.847 (MRR 0.722 → 0.861); every other category's numbers
+are identical with the flag on or off, because citation lookup only
+fires when a query actually parses out a §/IRC citation, which in this
+golden set only happens on exact_token questions.
 
 ### Generation (citation accuracy, groundedness, hallucination rate) — 15-question subset
 
@@ -131,6 +142,25 @@ words like "does" or "what" are actually rare in this corpus — BM25 gave
 query to rank 50 of 1,531. Stopword filtering fixed it, verified on that
 exact query before trusting the aggregate numbers.
 
+**Exact citation lookup, a fragment bug found and fixed.** The traced
+§280A(c)(1) failure above wasn't only about ranking — even when hybrid
+retrieval did surface the statute, it returned exactly one of its three
+alternative subparagraphs, (A), (B), or (C), and generation presented
+that single prong as if it were the complete rule. A query that names a
+specific provision doesn't need to be ranked into place: `src/retrieval/citation.py`
+parses `§`/`IRC`-style citations out of the query and resolves them
+directly against each chunk's own citation field, returning the cited
+provision plus every sibling beneath it rather than whichever one
+ranking happened to surface. "Beneath it" isn't a uniform one-level-down
+rule — this corpus sometimes skips a level entirely (`§1401(b)(2)` has
+no chunk of its own, and its two branches, `§1401(b)(2)(B)` and
+`§1401(b)(2)(A)(i)-(iii)`, sit at different depths below it), so the
+lookup walks to the closest existing chunk along every branch instead of
+assuming every branch is the same depth. Measured on the retrieval-only
+harness: exact_token Recall@5 goes from 0.722 to 0.847 (MRR 0.722 →
+0.861); every other category is unchanged, since this only fires on
+queries that actually parse out a section citation.
+
 **LLM-as-judge over RAGAS.** Groundedness and premise-correction are
 graded by a custom prompt against the same Groq client already in use,
 rather than adding RAGAS as a dependency — a hand-written rubric can be
@@ -164,9 +194,11 @@ for Publications (collapses to document-level only) than for statutes.
 
 - Finish full-55 generation metrics for all three configs, and
   hand-label a subset to report actual judge/human agreement.
-- Cross-encoder reranking and authority-weighted reordering — targets
-  the §280A(c)(1) failure mode directly, where the statute exists in the
-  corpus but does not outrank the Publication describing it.
+- Cross-encoder reranking and authority-weighted reordering — for
+  queries that don't name a specific provision explicitly, the statute
+  still doesn't reliably outrank the Publication describing it; exact
+  citation lookup only helps when the query itself parses out a §/IRC
+  citation.
 - Deterministic calculation tools (self-employment tax, home-office
   deduction) so arithmetic never comes from the LLM, plus a citation
   verification step (entailment check, retry once, then refuse).

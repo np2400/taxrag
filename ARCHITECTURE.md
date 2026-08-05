@@ -36,6 +36,7 @@ taxrag/
 │   │   ├── dense.py        # ChromaDB + embeddings
 │   │   ├── sparse.py       # BM25
 │   │   ├── fusion.py       # Reciprocal Rank Fusion
+│   │   ├── citation.py     # exact citation lookup — parses §/IRC citations out of a query, resolves them by chunk citation field
 │   │   ├── rerank.py       # cross-encoder — planned, not yet implemented
 │   │   └── authority.py    # statute-over-publication reorder — planned, not yet implemented
 │   ├── agents/
@@ -150,10 +151,11 @@ Refusal itself is implemented independently of the verifier above — `generate.
 @dataclass
 class PipelineConfig:
     use_dense: bool = True
-    use_sparse: bool = False      # implemented
-    use_rerank: bool = False      # planned
-    use_authority: bool = False   # planned
-    use_verifier: bool = False    # planned
+    use_sparse: bool = False           # implemented
+    use_citation_lookup: bool = True   # implemented
+    use_rerank: bool = False           # planned
+    use_authority: bool = False        # planned
+    use_verifier: bool = False         # planned
     k_retrieve: int = 20
     k_final: int = 5
 ```
