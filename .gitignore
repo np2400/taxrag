@@ -3,7 +3,6 @@
 
 # Data
 data/raw/
-data/processed/
 *.sqlite3
 chroma/
 
