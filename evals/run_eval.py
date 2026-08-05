@@ -51,7 +51,8 @@ from evals.metrics import (
     recall_at_k,
     refusal_precision,
 )
-from src.pipeline import Pipeline, PipelineConfig
+from src.pipeline import Pipeline, PipelineConfig, prioritize_citation_chunks
+from src.retrieval.citation import exact_citation_lookup, parse_citation
 from src.retrieval.dense import DenseRetriever
 from src.retrieval.fusion import reciprocal_rank_fusion
 from src.retrieval.sparse import SparseRetriever
@@ -94,9 +95,10 @@ def _retrieve_for_config(
     query: str,
     tax_year: int | None,
 ) -> list[RetrievalResult]:
-    """Same retrieval + fusion + truncation logic Pipeline.answer() runs
-    internally, exposed here since retrieval-only scoring needs the raw
-    RetrievalResult list, not just a generated Answer."""
+    """Same retrieval + fusion + citation-lookup + truncation logic
+    Pipeline.answer() runs internally, exposed here since retrieval-only
+    scoring needs the raw RetrievalResult list, not just a generated
+    Answer."""
     needs_candidate_pool = config.use_rerank or (config.use_dense and config.use_sparse)
     k = config.k_retrieve if needs_candidate_pool else config.k_final
 
@@ -108,6 +110,13 @@ def _retrieve_for_config(
         results = sparse.retrieve(query, k=k, tax_year=tax_year)
     else:
         results = dense.retrieve(query, k=k, tax_year=tax_year)
+
+    if config.use_citation_lookup:
+        parsed = parse_citation(query)
+        if parsed is not None:
+            citation_chunks = exact_citation_lookup(parsed)
+            if citation_chunks:
+                results = prioritize_citation_chunks(citation_chunks, results)
 
     return results[: config.k_final]
 
