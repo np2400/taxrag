@@ -7,9 +7,12 @@ refusal marker for when the provided context genuinely doesn't answer
 the question.
 """
 
+import sys
 import time
 
+_t0 = time.perf_counter()
 from groq import Groq
+print(f"[timing] import groq: {time.perf_counter() - _t0:.3f}s", file=sys.stderr)
 
 from config.settings import GROQ_API_KEY, GROQ_MODEL_NAME, REFUSAL_MARKER
 from src.types import Answer, RetrievalResult
