@@ -41,7 +41,18 @@ if st.button("Ask") and query:
         answer = pipeline.answer(query)
 
     if answer.refused:
-        st.warning(answer.text)
+        # answer.text is the raw model output, which for a refusal is the
+        # literal REFUSAL_MARKER string ("INSUFFICIENT_INFORMATION") --
+        # generate.py's contract with the model, not something meant for
+        # an end user to see. Shown here as a real explanation instead.
+        st.warning(
+            "I couldn't find sufficient authority in my corpus to answer "
+            "this. This system covers the home office deduction, vehicle "
+            "and mileage deduction, and self-employment tax — federal "
+            "only. Questions outside that scope, or requiring judgment "
+            "about a specific taxpayer's situation, are declined by "
+            "design."
+        )
     else:
         # st.write renders strings as markdown, and markdown treats $...$
         # as LaTeX math -- so a dollar amount like "$5 per square foot"
