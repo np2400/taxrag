@@ -7,6 +7,7 @@ refusal marker for when the provided context genuinely doesn't answer
 the question.
 """
 
+import re
 import time
 
 from groq import Groq
@@ -33,6 +34,59 @@ Rules:
 def _build_context(results: list[RetrievalResult]) -> str:
     parts = [f"[{r.chunk.citation}]\n{r.chunk.text}" for r in results]
     return "\n\n".join(parts)
+
+
+# Citation-token pattern: what the model can plausibly write inline, given
+# the bracket labels it was shown in _build_context. Deliberately independent
+# of evals/metrics.py's _CITATION_TOKEN_RE (that one truncates Treas. Reg.
+# paths for eval-time scoring against the golden set -- a separate, not yet
+# fixed issue); this one preserves full statute/reg precision since it's
+# reading what the model actually wrote, not comparing against a label.
+_CITATION_MENTION_RE = re.compile(
+    r"IRC\s+§\s?\d+[A-Za-z]*(?:\([a-zA-Z0-9]+\))*"
+    r"|§\s?\d+[A-Za-z]*(?:\([a-zA-Z0-9]+\))*"
+    r"|Treas\.\s?Reg\.\s?§[\d.]+-\d+(?:\([a-zA-Z0-9]+\))*"
+    r"|Pub\.?\s?\d+"
+    r"|Form\s?\d+"
+    r"|Schedule C Instructions"
+    r"|Schedule SE Instructions",
+    re.IGNORECASE,
+)
+
+
+def _mention_key(mention: str) -> str:
+    """Normalizes a mention (or a chunk's own citation) to a comparable key:
+    strip whitespace/periods, lowercase, and drop a leading 'irc' so
+    'IRC §280A(c)(1)' and a bare '§280A(c)(1)' key-match identically -- the
+    bracket label always includes 'IRC', but nothing stops the model from
+    dropping it when it writes the inline citation."""
+    key = re.sub(r"[\s.]", "", mention).lower()
+    return key[3:] if key.startswith("irc") else key
+
+
+def _extract_citations(text: str, results: list[RetrievalResult]) -> list[str]:
+    """Citations actually present in the generated text, not every retrieved
+    chunk whose document prefix happens to appear in it. A mention is kept
+    only if it's grounded -- its key is a prefix of, or equal to, at least
+    one retrieved chunk's citation key -- which rejects hallucinated
+    citations without expanding one generic mention (e.g. "(Pub. 463)")
+    into every retrieved chunk that shares that document prefix: the
+    retrieved chunk's own longer citation is never substituted in, only
+    what the model actually wrote is kept. Order of first appearance is
+    preserved; a citation mentioned more than once is kept only once."""
+    retrieved_keys = {_mention_key(r.chunk.citation) for r in results}
+    seen: set[str] = set()
+    citations: list[str] = []
+    for match in _CITATION_MENTION_RE.finditer(text):
+        mention = match.group(0)
+        key = _mention_key(mention)
+        if key in seen:
+            continue
+        if not any(rk.startswith(key) or key.startswith(rk) for rk in retrieved_keys):
+            continue
+        seen.add(key)
+        citations.append(mention)
+    return citations
 
 
 def generate_answer(query: str, results: list[RetrievalResult]) -> Answer:
@@ -62,19 +116,10 @@ def generate_answer(query: str, results: list[RetrievalResult]) -> Answer:
     text = response.choices[0].message.content.strip()
     refused = REFUSAL_MARKER in text
 
-    # Citation extraction, deliberately simple for Phase 1: a citation
-    # counts if it (or its prefix, before " — ") appears in the answer
-    # AND was actually retrieved. The prefix fallback matters for PDF
-    # chunks: their internal citation is long and descriptive (e.g.
-    # "Pub. 334 — Standard mileage rate..."), but a model naturally
-    # writes the short form "(Pub. 334)" inline, not the full string —
-    # verified by an actual run, not assumed. Whether a cited chunk
-    # truly supports the specific claim next to it is verifier.py's
-    # job (Phase 6).
-    def _cited(citation: str) -> bool:
-        return citation in text or citation.split(" — ")[0] in text
-
-    cited = [r.chunk.citation for r in results if _cited(r.chunk.citation)]
+    # Whether a cited chunk truly supports the specific claim next to it
+    # (not just that the citation was mentioned and grounded) is
+    # verifier.py's job (Phase 6).
+    cited = _extract_citations(text, results)
 
     usage = response.usage
     trace = {
