@@ -6,30 +6,13 @@ ablation study depends on every config being one flag flip, not a code
 change written under deadline in a later phase.
 """
 
-import sys
-import time
 from dataclasses import dataclass
 
-_t0 = time.perf_counter()
 from src.generate import generate_answer
-print(f"[timing] import src.generate: {time.perf_counter() - _t0:.3f}s", file=sys.stderr)
-
-_t0 = time.perf_counter()
 from src.retrieval.citation import exact_citation_lookup, parse_citation
-print(f"[timing] import src.retrieval.citation: {time.perf_counter() - _t0:.3f}s", file=sys.stderr)
-
-_t0 = time.perf_counter()
 from src.retrieval.dense import DenseRetriever
-print(f"[timing] import src.retrieval.dense: {time.perf_counter() - _t0:.3f}s", file=sys.stderr)
-
-_t0 = time.perf_counter()
 from src.retrieval.fusion import reciprocal_rank_fusion
-print(f"[timing] import src.retrieval.fusion: {time.perf_counter() - _t0:.3f}s", file=sys.stderr)
-
-_t0 = time.perf_counter()
 from src.retrieval.sparse import SparseRetriever
-print(f"[timing] import src.retrieval.sparse: {time.perf_counter() - _t0:.3f}s", file=sys.stderr)
-
 from src.types import Answer, Chunk, RetrievalResult
 
 
@@ -48,20 +31,8 @@ class PipelineConfig:
 class Pipeline:
     def __init__(self, config: PipelineConfig | None = None) -> None:
         self.config = config or PipelineConfig()
-
-        _t0 = time.perf_counter()
         self._dense = DenseRetriever() if self.config.use_dense else None
-        print(
-            f"[timing] DenseRetriever() construction: {time.perf_counter() - _t0:.3f}s",
-            file=sys.stderr,
-        )
-
-        _t0 = time.perf_counter()
         self._sparse = SparseRetriever() if self.config.use_sparse else None
-        print(
-            f"[timing] SparseRetriever() construction: {time.perf_counter() - _t0:.3f}s",
-            file=sys.stderr,
-        )
 
     def answer(self, query: str, tax_year: int | None = None) -> Answer:
         # A bigger candidate pool is only worth pulling when something

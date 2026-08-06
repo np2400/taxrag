@@ -6,27 +6,10 @@ per process, not once per query.
 """
 
 import json
-import sys
-import time
 
-_t0 = time.perf_counter()
-import torch  # noqa: F401 -- imported explicitly, ahead of sentence_transformers,
-              # purely so its cost is timed separately below rather than folded
-              # into the sentence_transformers number (it's already an implicit
-              # dependency of sentence_transformers either way).
-print(f"[timing] import torch: {time.perf_counter() - _t0:.3f}s", file=sys.stderr)
-
-_t0 = time.perf_counter()
 import chromadb
-print(f"[timing] import chromadb: {time.perf_counter() - _t0:.3f}s", file=sys.stderr)
-
-_t0 = time.perf_counter()
 import numpy as np
-print(f"[timing] import numpy: {time.perf_counter() - _t0:.3f}s", file=sys.stderr)
-
-_t0 = time.perf_counter()
 from sentence_transformers import SentenceTransformer
-print(f"[timing] import sentence_transformers: {time.perf_counter() - _t0:.3f}s", file=sys.stderr)
 
 from config.settings import (
     CHROMA_PERSIST_DIR,
@@ -52,36 +35,13 @@ _NO_YEAR = -1
 
 class DenseRetriever:
     def __init__(self) -> None:
-        _t0 = time.perf_counter()
         self._model = SentenceTransformer(EMBEDDING_MODEL_NAME)
-        print(
-            f"[timing] SentenceTransformer() construction: {time.perf_counter() - _t0:.3f}s",
-            file=sys.stderr,
-        )
-
-        _t0 = time.perf_counter()
         self._client = chromadb.PersistentClient(path=str(CHROMA_PERSIST_DIR))
-        print(
-            f"[timing] chromadb.PersistentClient() construction: {time.perf_counter() - _t0:.3f}s",
-            file=sys.stderr,
-        )
-
-        _t0 = time.perf_counter()
         self._collection = self._client.get_or_create_collection(
             name=_COLLECTION_NAME, metadata={"hnsw:space": "cosine"}
         )
-        print(
-            f"[timing] get_or_create_collection(): {time.perf_counter() - _t0:.3f}s",
-            file=sys.stderr,
-        )
-
-        _t0 = time.perf_counter()
         if self._collection.count() == 0:
             self._build_index()
-        print(
-            f"[timing] count() + _build_index() if empty: {time.perf_counter() - _t0:.3f}s",
-            file=sys.stderr,
-        )
 
     def _build_index(self) -> None:
         """First-run bootstrap. data/chroma/ is gitignored -- it's fully

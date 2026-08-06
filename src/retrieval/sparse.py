@@ -10,12 +10,8 @@ there's nothing to persist to disk in the first place.
 
 import json
 import re
-import sys
-import time
 
-_t0 = time.perf_counter()
 from rank_bm25 import BM25Okapi
-print(f"[timing] import rank_bm25: {time.perf_counter() - _t0:.3f}s", file=sys.stderr)
 
 from config.settings import CHUNKS_PATH
 from src.types import Chunk, RetrievalResult
