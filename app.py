@@ -16,17 +16,23 @@ try:
 except Exception:
     pass
 
-from src.pipeline import Pipeline
+from src.pipeline import Pipeline, PipelineConfig
 
 
 @st.cache_resource
 def get_pipeline() -> Pipeline:
     """Cached across reruns — Streamlit re-executes this whole script on
     every interaction, and Pipeline() is expensive to construct (loads
-    the embedding model, opens the Chroma connection, and on a fresh
-    deploy with no prebuilt data/chroma/, embeds the whole corpus once).
-    Without this, every keystroke would reload all of that from scratch."""
-    return Pipeline()
+    the embedding model, opens the Chroma connection, builds the BM25
+    index, and on a fresh deploy with no prebuilt data/chroma/, embeds
+    the whole corpus once). Without this, every keystroke would reload
+    all of that from scratch.
+
+    use_sparse=True: the deployed app was silently running dense-only
+    retrieval, since PipelineConfig()'s default is False -- this was
+    never actually the hybrid (BM25 + dense, RRF-fused) system the
+    README and eval results describe."""
+    return Pipeline(PipelineConfig(use_sparse=True))
 
 
 st.title("TaxRAG — Small-Business Tax Research Assistant")
