@@ -18,8 +18,7 @@ taxrag/
 ├── app.py                  # Streamlit entry point
 │
 ├── config/
-│   ├── settings.py         # paths, model names, k values
-│   └── tax_rates.yaml      # rates keyed by tax year — planned, not yet implemented
+│   └── settings.py         # paths, model names, k values
 │
 ├── data/
 │   ├── raw/                # downloaded IRC / Regs / Pubs (gitignored)
@@ -36,12 +35,7 @@ taxrag/
 │   │   ├── dense.py        # ChromaDB + embeddings
 │   │   ├── sparse.py       # BM25
 │   │   ├── fusion.py       # Reciprocal Rank Fusion
-│   │   ├── citation.py     # exact citation lookup — parses §/IRC citations out of a query, resolves them by chunk citation field
-│   │   ├── rerank.py       # cross-encoder — planned, not yet implemented
-│   │   └── authority.py    # statute-over-publication reorder — planned, not yet implemented
-│   ├── agents/
-│   │   ├── tools.py        # SE tax, home office calculators — planned, not yet implemented
-│   │   └── verifier.py     # citation check + retry — planned, not yet implemented
+│   │   └── citation.py     # exact citation lookup — parses §/IRC citations out of a query, resolves them by chunk citation field
 │   ├── generate.py         # synthesis with inline citations
 │   └── pipeline.py         # orchestrator
 │
@@ -51,9 +45,14 @@ taxrag/
 │   ├── run_eval.py         # CLI: python -m evals.run_eval --config hybrid
 │   └── results/            # one timestamped JSON per run — never overwritten
 │
-└── tests/                  # planned, not yet implemented
-    └── test_tools.py       # unit tests for tax math
+└── tests/
+    ├── test_citation.py    # exact citation lookup — uneven-depth descendant walk
+    └── test_generate.py    # citation extraction from generated text
 ```
+
+Reranking, authority-weighted reordering, calculation tools, and a
+citation verifier are described in the README's "What I'd add next";
+none exist yet.
 
 ---
 
@@ -154,8 +153,6 @@ class PipelineConfig:
     use_sparse: bool = False           # implemented
     use_citation_lookup: bool = True   # implemented
     use_rerank: bool = False           # planned
-    use_authority: bool = False        # planned
-    use_verifier: bool = False         # planned
     k_retrieve: int = 20
     k_final: int = 5
 ```
@@ -166,7 +163,7 @@ python -m evals.run_eval --config bm25_only
 python -m evals.run_eval --config hybrid
 ```
 
-Each run writes a timestamped JSON to `evals/results/`. The ablation table in the README is assembled from those files, never hand-typed. Flags for components that don't exist yet (`use_rerank`, `use_authority`, `use_verifier`) are defined now so adding the corresponding retriever or agent later means flipping a flag rather than restructuring the pipeline.
+Each run writes a timestamped JSON to `evals/results/`. The ablation table in the README is assembled from those files, never hand-typed. `use_rerank` is defined now even though `rerank.py` doesn't exist yet, so adding it later means flipping a flag rather than restructuring the pipeline.
 
 ---
 

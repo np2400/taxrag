@@ -22,8 +22,6 @@ class PipelineConfig:
     use_sparse: bool = False  # Phase 4
     use_citation_lookup: bool = True
     use_rerank: bool = False  # Phase 5
-    use_authority: bool = False  # Phase 5
-    use_verifier: bool = False  # Phase 6
     k_retrieve: int = 20
     k_final: int = 5
 
