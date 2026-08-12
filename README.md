@@ -264,3 +264,7 @@ python -m evals.run_eval --config hybrid
 
 Configs: `dense_only`, `bm25_only`, `hybrid`. Each run writes a
 timestamped JSON to `evals/results/`.
+
+`.github/workflows/keepalive.yml` pings the live app every 6 hours with a
+headless browser so Streamlit Cloud's 12-hour sleep timer never fires —
+see `scripts/keepalive.py`.
