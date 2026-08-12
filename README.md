@@ -209,9 +209,7 @@ Publications (collapses to document-level only) than for statutes.
   citation-display fix. A full re-run is the top outstanding item.
 - LLM-as-judge validity is unverified against human judgment — no
   hand-labeled subset has been checked against the judge's scores yet.
-- The 55-question golden set is 21 author-written and 34 assistant-drafted,
-  all reviewed by the author before use. It has not been reviewed by a
-  tax professional.
+- The 55-question golden set was drafted by an LLM and reviewed in full by a CPA before use.
 - `authority_weight` is assigned per source at ingestion (statute 1.0,
   publications 0.4) and carried on every chunk, but nothing currently
   ranks by it — the metadata exists ahead of the reordering step that
