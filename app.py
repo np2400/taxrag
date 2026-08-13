@@ -6,6 +6,8 @@ import os
 
 import streamlit as st
 
+st.set_page_config(page_title="TaxRAG", page_icon="📄")
+
 # Local dev reads GROQ_API_KEY from .env (see config/settings.py). Streamlit
 # Community Cloud has no .env -- secrets are set in its dashboard instead and
 # surface via st.secrets, so bridge that into the environment variable
@@ -37,10 +39,22 @@ def get_pipeline() -> Pipeline:
 
 st.title("TaxRAG — Small-Business Tax Research Assistant")
 st.caption("Research assistant surfacing federal tax authority. Not tax advice.")
+st.caption(
+    "Covers the home office deduction, vehicle and mileage deduction, and "
+    "self-employment tax — federal only."
+)
+st.caption(
+    "Examples:  \n"
+    "What does IRC §280A(c)(1) require for the home office exception?  \n"
+    "What records does §274(d) require to substantiate vehicle use?  \n"
+    "How is self-employment tax computed under §1401?"
+)
 
-query = st.text_input("Ask a question about home office, mileage, or self-employment tax:")
+with st.form("ask_form"):
+    query = st.text_input("Ask a question about home office, mileage, or self-employment tax:")
+    submitted = st.form_submit_button("Ask")
 
-if st.button("Ask") and query:
+if submitted and query:
     with st.spinner("Building index (first run only)..."):
         pipeline = get_pipeline()
     with st.spinner("Retrieving and generating..."):
