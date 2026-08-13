@@ -71,6 +71,7 @@ read directly from `evals/results/`, never hand-typed.
 | Config | Recall@5 | MRR |
 |---|---|---|
 | Dense only | 0.689 | 0.767 |
+| Dense + citation lookup | 0.719 | 0.803 |
 | BM25 only | 0.624 | 0.643 |
 | Hybrid (RRF) | 0.675 | 0.813 |
 | **Hybrid + citation lookup** (current default) | **0.706** | **0.847** |
