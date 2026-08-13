@@ -45,9 +45,9 @@ st.caption(
 )
 st.caption(
     "Examples:  \n"
-    "What does IRC §280A(c)(1) require for the home office exception?  \n"
-    "What records does §274(d) require to substantiate vehicle use?  \n"
-    "How is self-employment tax computed under §1401?"
+    "What does IRC §280A(c)(1) require for the home-office exception?  \n"
+    "What records are required to substantiate business vehicle use?  \n"
+    "When can a self-employed taxpayer deduct vehicle mileage?"
 )
 
 with st.form("ask_form"):
