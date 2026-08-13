@@ -19,7 +19,7 @@ from src.types import Answer, Chunk, RetrievalResult
 @dataclass
 class PipelineConfig:
     use_dense: bool = True
-    use_sparse: bool = False  # Phase 4
+    use_sparse: bool = True  # hybrid is the default; dense_only ablation opts out explicitly
     use_citation_lookup: bool = True
     use_rerank: bool = False  # Phase 5
     k_retrieve: int = 20

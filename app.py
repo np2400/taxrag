@@ -30,10 +30,9 @@ def get_pipeline() -> Pipeline:
     the whole corpus once). Without this, every keystroke would reload
     all of that from scratch.
 
-    use_sparse=True: the deployed app was silently running dense-only
-    retrieval, since PipelineConfig()'s default is False -- this was
-    never actually the hybrid (BM25 + dense, RRF-fused) system the
-    README and eval results describe."""
+    use_sparse=True: explicit here, though it now matches
+    PipelineConfig's default -- hybrid (BM25 + dense, RRF-fused) is what
+    the README and eval results describe."""
     return Pipeline(PipelineConfig(use_sparse=True))
 
 

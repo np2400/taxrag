@@ -66,7 +66,7 @@ RESULTS_DIR = Path(__file__).parent / "results"
 # those components land. This dict is the one place later phases extend,
 # without needing to change how a run is scored.
 _CONFIGS = {
-    "dense_only": PipelineConfig(use_dense=True),
+    "dense_only": PipelineConfig(use_dense=True, use_sparse=False),
     "bm25_only": PipelineConfig(use_dense=False, use_sparse=True),
     "hybrid": PipelineConfig(use_dense=True, use_sparse=True),
 }
