@@ -107,6 +107,7 @@ An ablation study isolates each component's contribution by re-running the same 
 ## Known limitations
 
 - **Multi-hop reasoning is the weakest category.** Questions requiring synthesis across statute, regulation, and a ruling that qualifies both are not handled well. Retrieval assumes the answer lives in a single authority. Graph-based retrieval over citation cross-references is the natural fix.
+- **Temporal filtering is scaffolding, not an active capability.** The tax year is threaded through the chunk metadata, both retrievers, and the pipeline's query interface, but neither retriever filters on it. Every source document currently carries an unrestricted (year-agnostic) tax year, so the corpus has no temporal variation to filter against either. Left unimplemented on both retrievers on purpose, so the hybrid ablation's two sides stay comparable — adding it to only one would confound the comparison.
 - **LLM-as-judge correlates imperfectly with human judgment.** No hand-labeled subset has been scored against the judge yet — this is an open, unverified gap, not a measured figure.
 - **Single-user, local deployment.** ChromaDB runs in-process. Concurrent use would require pgvector or Qdrant.
 - **Federal only, three topics.** Not a general tax research tool.

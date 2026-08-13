@@ -10,7 +10,6 @@ Companion to `DESIGN.md`, which covers the reasoning behind these choices. This 
 
 ```
 taxrag/
-├── CLAUDE.md               # agent operating rules
 ├── ARCHITECTURE.md         # this file — where & how
 ├── DESIGN.md               # why — rationale and known limitations
 ├── README.md

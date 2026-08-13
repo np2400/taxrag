@@ -37,7 +37,8 @@ hypothesized.
 ```
 Query
   |
-  |--> Retrieval  (metadata filter: tax_year applies to both retrievers)
+  |--> Retrieval  (tax_year threaded through both retrievers; not yet
+  |    filtered on by either -- see Known limitations)
   |      |-- BM25 (sparse, rank_bm25)   --+
   |      |                                |-- Reciprocal Rank Fusion --+
   |      |-- Dense (bge-base-en-v1.5)   --+                            |
@@ -83,9 +84,13 @@ By category, all four configs:
 | exact_token | 12 | 0.722 | 0.681 | 0.722 | **0.847** | 0.861 |
 | factual_lookup | 15 | 0.700 | 0.500 | 0.633 | 0.633 | 0.867 |
 | computational | 8 | 0.750 | 0.750 | 0.750 | 0.750 | 0.938 |
-| temporal | 5 | 0.800 | 0.800 | 0.800 | 0.800 | 0.667 |
+| temporal† | 5 | 0.800 | 0.800 | 0.800 | 0.800 | 0.667 |
 | multi_hop | 5 | 0.517 | 0.583 | 0.583 | 0.583 | 1.000 |
 | adversarial | 4 | 0.500 | 0.500 | 0.500 | 0.500 | 0.583 |
+
+† `tax_year` isn't filtered on yet by either retriever — this row
+reflects ordinary retrieval, not temporal filtering. See Known
+limitations.
 
 Honest read, in three parts:
 
@@ -220,6 +225,14 @@ Publications (collapses to document-level only) than for statutes.
 - Retrieval assumes the answer lives in one authority; multi-hop
   questions spanning statute, regulation, and publication are a measured,
   unsolved weak category.
+- `tax_year` is threaded through `Chunk`, both retrievers' `retrieve()`
+  signatures, and `Pipeline.answer()`, but neither `DenseRetriever` nor
+  `SparseRetriever` filters on it. All 12 source documents currently carry
+  `tax_year_start`/`tax_year_end` = `None`, so the corpus has no temporal
+  variation to filter against yet either. Left unimplemented on both
+  retrievers deliberately — adding it to only one would make the hybrid
+  ablation's two sides not actually comparable. The `temporal` eval
+  category (see Results) does not currently measure filtering.
 - `data/raw/` is not tracked in git. The repo ships precomputed
   `chunks.json` and `embeddings.npz`, so the app and the eval harness run
   from a fresh clone, but re-running ingestion from source requires
