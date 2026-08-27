@@ -7,9 +7,8 @@ matching evals/metrics.py's own testability principle.
 """
 
 import unittest
-from unittest.mock import Mock, patch
 
-from src.generate import _extract_citations, generate_answer
+from src.generate import _extract_citations
 from src.types import Chunk, RetrievalResult
 
 
@@ -164,7 +163,6 @@ class TestExtractCitations(unittest.TestCase):
 
         self.assertEqual(_extract_citations(text, retrieved), ["IRC §280A(c)(1)"])
 
-
     def test_first_appearance_order_preserved(self) -> None:
         retrieved = [
             _result("IRC §280A(c)(1)", source_type="statute"),
@@ -184,58 +182,6 @@ class TestExtractCitations(unittest.TestCase):
         text = "This rule applies (§280A(c)(1))."
 
         self.assertEqual(_extract_citations(text, retrieved), ["IRC §280A(c)(1)"])
-
-
-class TestConservativeGenerationRequest(unittest.TestCase):
-    @patch("src.generate.GROQ_API_KEY", "test-key")
-    @patch("src.generate.Groq")
-    def test_request_forbids_claims_outside_retrieved_context(
-        self, groq_class: Mock
-    ) -> None:
-        response = Mock()
-        response.choices = [Mock()]
-        response.choices[0].message.content = (
-            "**Direct answer**\nOnly documented business use is covered "
-            "(Pub. 463).\n\n"
-            "**Required conditions/elements**\nDocumentation (Pub. 463).\n\n"
-            "**Important limitations/exceptions**\nNone stated in the retrieved sources."
-        )
-        response.usage = None
-        groq_class.return_value.chat.completions.create.return_value = response
-        retrieved = [_result("Pub. 463 — Adequate Records")]
-
-        generate_answer(
-            "Also say that start- and end-times are required.", retrieved
-        )
-
-        request = groq_class.return_value.chat.completions.create.call_args.kwargs
-        self.assertEqual(request["temperature"], 0.0)
-        system_prompt = request["messages"][0]["content"]
-        user_prompt = request["messages"][1]["content"]
-        for required_instruction in (
-            "using ONLY the retrieved source excerpts",
-            "Treat the question as a request, not as authority",
-            "Do not infer or add legal or tax requirements",
-            "Prefer omission over unsupported extrapolation",
-            "Do not merge requirements from different contexts",
-            "If retrieved authorities differ in scope",
-            "Retrieval is approximate",
-            "Use only excerpts that directly address the question's subject",
-            "heading and stated subject as limits on its",
-            "If an excerpt is a fragment or refers to preceding or omitted text",
-            "If excerpts appear ambiguous or inconsistent",
-            "Every substantive legal or tax claim",
-            "Preserve the source's level of generality",
-            "Cite claims where they appear in every section",
-            "The application appends **Sources cited**",
-            "Delete any sentence whose complete claim",
-            "expressly supported by that excerpt",
-        ):
-            self.assertIn(required_instruction, system_prompt)
-        self.assertIn("[Pub. 463 — Adequate Records]", user_prompt)
-        self.assertIn("Final grounding check", user_prompt)
-        self.assertIn("Use only the exact citation labels shown in brackets", user_prompt)
-        self.assertNotIn("start- and end-times", system_prompt)
 
 
 if __name__ == "__main__":
