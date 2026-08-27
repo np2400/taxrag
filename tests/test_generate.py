@@ -27,6 +27,89 @@ def _result(citation: str, source_type: str = "publication") -> RetrievalResult:
 
 
 class TestExtractCitations(unittest.TestCase):
+    def test_only_treasury_regulation_citation(self) -> None:
+        retrieved = [
+            _result("Treas. Reg. §1.274-5(j)(2)", source_type="regulation")
+        ]
+        # Groq commonly emits U+2011 (non-breaking hyphen) in prose. The UI
+        # renders it like a normal hyphen, which hid the production mismatch.
+        text = "Adequate records are required (Treas. Reg. § 1.274‑5(j)(2))."
+
+        self.assertEqual(
+            _extract_citations(text, retrieved), ["Treas. Reg. §1.274-5(j)(2)"]
+        )
+
+    def test_publication_and_treasury_regulation_citations(self) -> None:
+        retrieved = [
+            _result("Pub. 463 — Standard Mileage Rate"),
+            _result("Treas. Reg. §1.274-5(j)(2)", source_type="regulation"),
+        ]
+        text = (
+            "The mileage method is described in Publication 463. "
+            "Its recordkeeping rule appears in Treasury Regulation "
+            "§ 1.274-5(j)(2)."
+        )
+
+        self.assertEqual(
+            _extract_citations(text, retrieved),
+            ["Pub. 463", "Treas. Reg. §1.274-5(j)(2)"],
+        )
+
+    def test_irc_treasury_regulation_and_publication_citations(self) -> None:
+        retrieved = [
+            _result("IRC §274(d)", source_type="statute"),
+            _result("Treas. Reg. §1.274-5", source_type="regulation"),
+            _result("Pub. 463 — Adequate Records"),
+        ]
+        text = (
+            "The statute imposes substantiation requirements (§274(d)); "
+            "the regulation supplies the rules (Treas. Reg. §1.274-5), "
+            "and the IRS publication summarizes them (Pub 463)."
+        )
+
+        self.assertEqual(
+            _extract_citations(text, retrieved),
+            ["IRC §274(d)", "Treas. Reg. §1.274-5", "Pub. 463"],
+        )
+
+    def test_duplicate_citation_spellings_collapse(self) -> None:
+        retrieved = [
+            _result("Treas. Reg. §1.274-5(j)(2)", source_type="regulation")
+        ]
+        text = (
+            "The rule is in Treas. Reg. §1.274-5(j)(2). "
+            "See Treasury Regulation § 1.274-5(j)(2) again."
+        )
+
+        self.assertEqual(
+            _extract_citations(text, retrieved), ["Treas. Reg. §1.274-5(j)(2)"]
+        )
+
+    def test_retrieved_but_uncited_sources_are_excluded(self) -> None:
+        retrieved = [
+            _result("Pub. 463 — Standard Mileage Rate"),
+            _result("Treas. Reg. §1.274-5(j)(2)", source_type="regulation"),
+            _result("IRC §274(d)", source_type="statute"),
+        ]
+        text = "The mileage method is described in Pub. 463."
+
+        self.assertEqual(_extract_citations(text, retrieved), ["Pub. 463"])
+
+    def test_irs_instruction_citations_are_preserved(self) -> None:
+        retrieved = [
+            _result("Schedule C Instructions — Line 9", source_type="instruction"),
+            _result("Form 8829 Instructions — Purpose", source_type="instruction"),
+        ]
+        text = (
+            "Report the expense as described in Instructions for Schedule C "
+            "(Form 1040) and Instructions for Form 8829."
+        )
+
+        self.assertEqual(
+            _extract_citations(text, retrieved),
+            ["Schedule C Instructions", "Form 8829 Instructions"],
+        )
+
     def test_generic_mention_does_not_fan_out_across_retrieved_chunks(self) -> None:
         """Bug C regression: one generic "(Pub. 463)" mention must not turn
         into one entry per retrieved Pub. 463 chunk."""
@@ -98,7 +181,7 @@ class TestExtractCitations(unittest.TestCase):
         retrieved = [_result("IRC §280A(c)(1)", source_type="statute")]
         text = "This rule applies (§280A(c)(1))."
 
-        self.assertEqual(_extract_citations(text, retrieved), ["§280A(c)(1)"])
+        self.assertEqual(_extract_citations(text, retrieved), ["IRC §280A(c)(1)"])
 
 
 if __name__ == "__main__":

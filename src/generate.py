@@ -37,21 +37,60 @@ def _build_context(results: list[RetrievalResult]) -> str:
 
 
 # Citation-token pattern: what the model can plausibly write inline, given
-# the bracket labels it was shown in _build_context. Deliberately independent
-# of evals/metrics.py's _CITATION_TOKEN_RE (that one truncates Treas. Reg.
-# paths for eval-time scoring against the golden set -- a separate, not yet
-# fixed issue); this one preserves full statute/reg precision since it's
+# the bracket labels it was shown in _build_context. Treasury Regulations
+# must precede the generic section-symbol branch: if a regulation spelling
+# varies slightly (including whitespace or a Unicode hyphen), the generic
+# branch must not reduce it to the bogus IRC citation "§1".
+#
+# Deliberately independent of evals/metrics.py's _CITATION_TOKEN_RE (that one
+# truncates Treas. Reg. paths for eval-time scoring against the golden set --
+# a separate issue); this one preserves full statute/reg precision since it's
 # reading what the model actually wrote, not comparing against a label.
 _CITATION_MENTION_RE = re.compile(
-    r"IRC\s+§\s?\d+[A-Za-z]*(?:\([a-zA-Z0-9]+\))*"
-    r"|§\s?\d+[A-Za-z]*(?:\([a-zA-Z0-9]+\))*"
-    r"|Treas\.\s?Reg\.\s?§[\d.]+-\d+(?:\([a-zA-Z0-9]+\))*"
-    r"|Pub\.?\s?\d+"
-    r"|Form\s?\d+"
-    r"|Schedule C Instructions"
-    r"|Schedule SE Instructions",
-    re.IGNORECASE,
+    r"""
+    (?P<reg>
+        Treas(?:ury)?\.?\s+Reg(?:ulation)?\.?\s*§\s*
+        (?P<reg_section>\d+\.\d+(?:[-\u2010-\u2015\u2212]\d+[A-Za-z]*)?)
+        (?P<reg_path>(?:\([a-zA-Z0-9]+\))*)
+    )
+    |(?P<irc>
+        (?:IRC\s+)?§\s*
+        (?P<irc_section>\d+[A-Za-z]*)
+        (?!\.)
+        (?P<irc_path>(?:\([a-zA-Z0-9]+\))*)
+    )
+    |(?P<publication>Pub(?:lication)?\.?\s*(?P<pub_number>\d+))
+    |(?P<form>
+        (?:(?:Instructions\s+for\s+)?Form\s*(?P<form_number>\d+))
+        (?:\s+Instructions)?
+    )
+    |(?P<schedule>
+        (?:Instructions\s+for\s+)?Schedule\s+(?P<schedule_name>C|SE)
+        (?:\s*\(Form\s*1040\))?(?:\s+Instructions)?
+    )
+    """,
+    re.IGNORECASE | re.VERBOSE,
 )
+
+
+def _normalize_mention(match: re.Match[str]) -> str:
+    """Return one stable display spelling for a parsed citation."""
+    if match.group("reg"):
+        section = re.sub(r"[\u2010-\u2015\u2212]", "-", match.group("reg_section"))
+        return (
+            f"Treas. Reg. §{section}"
+            f"{match.group('reg_path')}"
+        )
+    if match.group("irc"):
+        return f"IRC §{match.group('irc_section')}{match.group('irc_path')}"
+    if match.group("publication"):
+        return f"Pub. {match.group('pub_number')}"
+    if match.group("form"):
+        normalized = f"Form {match.group('form_number')}"
+        if "instruction" in match.group("form").lower():
+            normalized += " Instructions"
+        return normalized
+    return f"Schedule {match.group('schedule_name').upper()} Instructions"
 
 
 def _mention_key(mention: str) -> str:
@@ -60,7 +99,9 @@ def _mention_key(mention: str) -> str:
     'IRC §280A(c)(1)' and a bare '§280A(c)(1)' key-match identically -- the
     bracket label always includes 'IRC', but nothing stops the model from
     dropping it when it writes the inline citation."""
-    key = re.sub(r"[\s.]", "", mention).lower()
+    match = _CITATION_MENTION_RE.search(mention)
+    normalized = _normalize_mention(match) if match else mention
+    key = re.sub(r"[\s.]", "", normalized).lower()
     return key[3:] if key.startswith("irc") else key
 
 
@@ -78,7 +119,7 @@ def _extract_citations(text: str, results: list[RetrievalResult]) -> list[str]:
     seen: set[str] = set()
     citations: list[str] = []
     for match in _CITATION_MENTION_RE.finditer(text):
-        mention = match.group(0)
+        mention = _normalize_mention(match)
         key = _mention_key(mention)
         if key in seen:
             continue
